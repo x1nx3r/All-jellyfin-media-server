@@ -11,6 +11,19 @@
 #   - Each container has a memory limit. The host has 7 GB of RAM.
 #   - The Jellyseerr log level is info. The level debug makes large log files.
 #
+# WARNING: Coolify does not accept a variable in a volume target.
+# Thus each container uses the fixed path /data for the media tree.
+# The change keeps the hardlinks, because all paths are below one mount.
+#
+# Supply these container paths in the application settings:
+#   - qBittorrent save path: /data/qbittorrent/downloads
+#   - qBittorrent categories: /data/qbittorrent/downloads/radarr
+#                             /data/qbittorrent/downloads/sonarr
+#   - Sonarr root folder: /data/sonarr/tv
+#   - Radarr root folder: /data/radarr/movies
+#   - Download client path for Sonarr and Radarr: /data/qbittorrent/downloads
+#   - Jellyfin libraries: /data/radarr/movies and /data/sonarr/tv
+#
 # You must supply the environment variables COMMON_PATH and TZ.
 #
 # WARNING: Hardware transcoding needs a render device.
@@ -30,9 +43,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}:/data
       - ${COMMON_PATH}/configs/qbittorrent:/config
-      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
     ports:
       - 8081:8081
       - 6881:6881
@@ -60,10 +72,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}:/data
       - ${COMMON_PATH}/configs/sonarr:/config
-      - ${COMMON_PATH}/sonarr/tv:/tv
-      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
     ports:
       - 8989:8989
     mem_limit: 512m
@@ -76,10 +86,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}:/data
       - ${COMMON_PATH}/configs/radarr:/config
-      - ${COMMON_PATH}/radarr/movies:/movies
-      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
     ports:
       - 7878:7878
     mem_limit: 512m
@@ -93,17 +101,14 @@ services:
       - TZ=${TZ}
     devices:
       - /dev/dri:/dev/dri
+    volumes:
+      - ${COMMON_PATH}:/data
+      - ${COMMON_PATH}/configs/jellyfin:/config
+      - ${COMMON_PATH}/jellyfin/cache:/cache
     ports:
       - 8096:8096
       - 7359:7359/udp
       - 1900:1900/udp
-    volumes:
-      - ${COMMON_PATH}:${COMMON_PATH}
-      - ${COMMON_PATH}/configs/jellyfin:/config
-      - ${COMMON_PATH}/jellyfin/cache:/cache
-      - ${COMMON_PATH}/sonarr/tv:/data/tvshows
-      - ${COMMON_PATH}/radarr/movies:/data/movies
-      - ${COMMON_PATH}/qbittorrent/downloads:/data/media_downloads
     mem_limit: 1024m
     restart: unless-stopped
 
@@ -112,10 +117,10 @@ services:
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
-    ports:
-      - 5055:5055
     volumes:
       - ${COMMON_PATH}/configs/jellyseerr:/app/config
+    ports:
+      - 5055:5055
     mem_limit: 512m
     restart: unless-stopped
 
@@ -125,12 +130,10 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}:/data
+      - ${COMMON_PATH}/configs/bazarr:/config
     ports:
       - 6767:6767
-    volumes:
-      - ${COMMON_PATH}:${COMMON_PATH}
-      - ${COMMON_PATH}/configs/bazarr:/config
-      - ${COMMON_PATH}/sonarr/tv:/tv
-      - ${COMMON_PATH}/radarr/movies:/movies
     mem_limit: 384m
     restart: unless-stopped

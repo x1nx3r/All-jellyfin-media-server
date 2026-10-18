@@ -11,9 +11,13 @@
 #   - Each container has a memory limit. The host has 7 GB of RAM.
 #   - The Jellyseerr log level is info. The level debug makes large log files.
 #
-# WARNING: Coolify does not accept a variable in a volume target.
-# Thus each container uses the fixed path /data for the media tree.
-# The change keeps the hardlinks, because all paths are below one mount.
+# WARNING: The host paths below are literal, not variables.
+# Coolify accepts neither a variable in a volume target nor a variable in a
+# volume source. A variable in the source becomes a named Docker volume, and
+# the media tree is then not visible on the host.
+#
+# The fixed path is /data/isyrr. Change it in every volume line to move the
+# media tree. The path must be an absolute path.
 #
 # Supply these container paths in the application settings:
 #   - qBittorrent save path: /data/qbittorrent/downloads
@@ -24,7 +28,7 @@
 #   - Download client path for Sonarr and Radarr: /data/qbittorrent/downloads
 #   - Jellyfin libraries: /data/radarr/movies and /data/sonarr/tv
 #
-# You must supply the environment variables COMMON_PATH and TZ.
+# You must supply the environment variable TZ.
 #
 # WARNING: Hardware transcoding needs a render device.
 # Do a test before the deployment:
@@ -43,8 +47,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/configs/qbittorrent:/config
+      - /data/isyrr:/data
+      - /data/isyrr/configs/qbittorrent:/config
     ports:
       - 8081:8081
       - 6881:6881
@@ -59,7 +63,7 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}/configs/prowlarr:/config
+      - /data/isyrr/configs/prowlarr:/config
     ports:
       - 9696:9696
     mem_limit: 384m
@@ -72,8 +76,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/configs/sonarr:/config
+      - /data/isyrr:/data
+      - /data/isyrr/configs/sonarr:/config
     ports:
       - 8989:8989
     mem_limit: 512m
@@ -86,8 +90,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/configs/radarr:/config
+      - /data/isyrr:/data
+      - /data/isyrr/configs/radarr:/config
     ports:
       - 7878:7878
     mem_limit: 512m
@@ -102,9 +106,9 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/configs/jellyfin:/config
-      - ${COMMON_PATH}/jellyfin/cache:/cache
+      - /data/isyrr:/data
+      - /data/isyrr/configs/jellyfin:/config
+      - /data/isyrr/jellyfin/cache:/cache
     ports:
       - 8096:8096
       - 7359:7359/udp
@@ -118,7 +122,7 @@ services:
       - LOG_LEVEL=info
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}/configs/jellyseerr:/app/config
+      - /data/isyrr/configs/jellyseerr:/app/config
     ports:
       - 5055:5055
     mem_limit: 512m
@@ -131,8 +135,8 @@ services:
       - PGID=0
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/configs/bazarr:/config
+      - /data/isyrr:/data
+      - /data/isyrr/configs/bazarr:/config
     ports:
       - 6767:6767
     mem_limit: 384m

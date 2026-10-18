@@ -1,0 +1,136 @@
+---
+# Isyrr - stack without a VPN.
+# This file is adjusted for a host with an AMD iGPU and a small quantity of RAM.
+#
+# Differences from compose_files/docker-compose.yaml:
+#   - FlareSolverr and Jackett are removed. Prowlarr supplies the indexers.
+#     The two containers are not necessary. The removal saves about 650 MB of RAM.
+#   - Jellyfin gets /dev/dri. This device permits AMD VAAPI hardware transcoding.
+#   - The NVIDIA_VISIBLE_DEVICES variable is removed. It has no effect on AMD.
+#   - The qBittorrent WebUI uses port 8081. Port 8080 is in use on the host.
+#   - Each container has a memory limit. The host has 7 GB of RAM.
+#   - The Jellyseerr log level is info. The level debug makes large log files.
+#
+# You must supply the environment variables COMMON_PATH and TZ.
+#
+# WARNING: Hardware transcoding needs a render device.
+# Do a test before the deployment:
+#   docker run --rm --device /dev/dri:/dev/dri \
+#     --entrypoint /bin/bash lscr.io/linuxserver/jellyfin:latest \
+#     -c '/usr/lib/jellyfin-ffmpeg/ffmpeg -hide_banner -init_hw_device \
+#     vaapi=va:/dev/dri/renderD128 -f lavfi -i color=c=black:s=1280x720:r=30:d=1 \
+#     -vf format=nv12,hwupload -c:v h264_vaapi -f null -'
+
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    environment:
+      - WEBUI_PORT=8081
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/configs/qbittorrent:/config
+      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
+    ports:
+      - 8081:8081
+      - 6881:6881
+      - 6881:6881/udp
+    mem_limit: 512m
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}/configs/prowlarr:/config
+    ports:
+      - 9696:9696
+    mem_limit: 384m
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/configs/sonarr:/config
+      - ${COMMON_PATH}/sonarr/tv:/tv
+      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
+    ports:
+      - 8989:8989
+    mem_limit: 512m
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/configs/radarr:/config
+      - ${COMMON_PATH}/radarr/movies:/movies
+      - ${COMMON_PATH}/qbittorrent/downloads:/downloads
+    ports:
+      - 7878:7878
+    mem_limit: 512m
+    restart: unless-stopped
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - 8096:8096
+      - 7359:7359/udp
+      - 1900:1900/udp
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/configs/jellyfin:/config
+      - ${COMMON_PATH}/jellyfin/cache:/cache
+      - ${COMMON_PATH}/sonarr/tv:/data/tvshows
+      - ${COMMON_PATH}/radarr/movies:/data/movies
+      - ${COMMON_PATH}/qbittorrent/downloads:/data/media_downloads
+    mem_limit: 1024m
+    restart: unless-stopped
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    ports:
+      - 5055:5055
+    volumes:
+      - ${COMMON_PATH}/configs/jellyseerr:/app/config
+    mem_limit: 512m
+    restart: unless-stopped
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    ports:
+      - 6767:6767
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/configs/bazarr:/config
+      - ${COMMON_PATH}/sonarr/tv:/tv
+      - ${COMMON_PATH}/radarr/movies:/movies
+    mem_limit: 384m
+    restart: unless-stopped

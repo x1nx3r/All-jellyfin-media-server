@@ -14,6 +14,10 @@
 #     The DNS server of the local router supplies a wrong address for some
 #     indexer and tracker domains. The wrong address causes a TLS error with
 #     the message "RemoteCertificateNameMismatch".
+#   - The request manager uses the image seerr/seerr. The image
+#     fallenbagel/jellyseerr is archived. Docker Hub marks the tag latest of
+#     that image as 2.7.3-deprecated and refers to seerr/seerr. The service
+#     name stays "jellyseerr" to keep the container name unchanged.
 #
 # WARNING: The host paths below are literal, not variables.
 # Coolify accepts neither a variable in a volume target nor a variable in a
@@ -136,7 +140,7 @@ services:
     restart: unless-stopped
 
   jellyseerr:
-    image: fallenbagel/jellyseerr:latest
+    image: seerr/seerr:latest
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}

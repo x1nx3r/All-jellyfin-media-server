@@ -10,6 +10,10 @@
 #   - The qBittorrent WebUI uses port 8081. Port 8080 is in use on the host.
 #   - Each container has a memory limit. The host has 7 GB of RAM.
 #   - The Jellyseerr log level is info. The level debug makes large log files.
+#   - Each container uses the public DNS resolvers 1.1.1.1 and 8.8.8.8.
+#     The DNS server of the local router supplies a wrong address for some
+#     indexer and tracker domains. The wrong address causes a TLS error with
+#     the message "RemoteCertificateNameMismatch".
 #
 # WARNING: The host paths below are literal, not variables.
 # Coolify accepts neither a variable in a volume target nor a variable in a
@@ -46,6 +50,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr:/data
       - /data/isyrr/configs/qbittorrent:/config
@@ -62,6 +69,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr/configs/prowlarr:/config
     ports:
@@ -75,6 +85,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr:/data
       - /data/isyrr/configs/sonarr:/config
@@ -89,6 +102,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr:/data
       - /data/isyrr/configs/radarr:/config
@@ -103,6 +119,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -121,6 +140,9 @@ services:
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr/configs/jellyseerr:/app/config
     ports:
@@ -134,6 +156,9 @@ services:
       - PUID=0
       - PGID=0
       - TZ=${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - /data/isyrr:/data
       - /data/isyrr/configs/bazarr:/config
